@@ -6,9 +6,7 @@ speciesfiles<-list.files(getwd(),pattern="\\.txt$")
 library(gdata)
 RawData<-lapply(1:3,function(ind) read.delim(speciesfiles[ind],as.is=T))
 names(RawData)<-sapply(strsplit(speciesfiles,"_"),function(x)x[2])
-test<-sapply(strsplit(colnames(RawData), 2),function(x)x[1])
-colnames(RawData)
-
+names(RawData)<-sapply(strsplit(names(RawData),"\\."),function(x)x[1])
 
 #reorganise
 library(reshape2)
@@ -35,11 +33,14 @@ df$Year<-gsub("\\.","",df$Year)
 df$Year<-gsub("AB","A",df$Year)#check...
 df$Year<-as.numeric(substr(df$Year,2,4))
 
-#Ensure there are NAs in the right places  (i.e, in years and sites when there was no census
+#Ensure there are NAs in the right places  (i.e, in years and sites when there was no census)
 df$Count[(df$SiteID=="SiteA"&df$Year=="3")    |(df$SiteID=="SiteA"&df$Year=="4")]<-NA
 df$Count[(df$SiteID=="SiteC"&df$Year%in%15:18)|(df$SiteID=="SiteC"&df$Year%in%15:18)]<-NA
 df$Count[(df$SiteID=="SiteC"&df$Year%in%22:23)|(df$SiteID=="SiteC"&df$Year%in%22:23)]<-NA
 df$Count[(df$SiteID=="SiteA"&df$Year%in%22:23)|(df$SiteID=="SiteA"&df$Year%in%22:23)]<-NA
+
+#fix year to real year
+df$Year<-df$Year+1990
 
 #get rid of empty space
 df<-subset(df,Species!="")
@@ -48,6 +49,6 @@ df<-subset(df,Species!="")
 speciesnames<-read.delim("specieslist_Baert_checked.txt",as.is=T)
 df$Species<-speciesnames$species.Platnick[match(df$Species,speciesnames$species.Diana)]
 
-#then average over mistakes
+#then average over mistakes in species names
 df<-ddply(df,.(Species,SiteID,Year),summarize,Count=ifelse(all(is.na(Count)),NA,sum(Count,na.rm=T)))
    
